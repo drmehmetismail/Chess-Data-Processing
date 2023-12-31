@@ -12,3 +12,17 @@ This Python codebase processes chess game data, transforming it from compressed 
 
 ## Usage
 Run the `main.py` script to process data through all stages:
+
+## Reference
+For more information, see https://doi.org/10.48550/arXiv.2302.13937
+
+## Citation
+Please cite the following paper if you find this helpful.
+```
+@article{ismail2023human,
+  title={Human and Machine: Practicable Mechanisms for Measuring Performance in Partial Information Games},
+  author={Ismail, Mehmet S},
+  journal={arXiv preprint arXiv:2302.13937},
+  year={2023}
+}
+```
