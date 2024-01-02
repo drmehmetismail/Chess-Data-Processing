@@ -6,13 +6,15 @@ import os
 import chess.pgn
 import zstandard as zstd
 import io
+import sys
 
-def decompress_and_parse(input_directory, output_directory):
+def decompress_and_parse(input_directory, output_directory, bullet_directory):
     eval_games_count = 0
     bullet_games_count = 0
 
     evals_file_path = os.path.join(output_directory, 'evals.pgn')
-    bullets_file_path = os.path.join(output_directory, 'bullets.pgn')
+    print(f"Writing games with eval comments to {evals_file_path}...")
+    bullets_file_path = os.path.join(bullet_directory, 'bullets.pgn')
 
     with open(evals_file_path, 'w', encoding='utf-8') as evals_file, open(bullets_file_path, 'w', encoding='utf-8') as bullets_file:
         for file in os.listdir(input_directory):
@@ -42,16 +44,20 @@ def decompress_and_parse(input_directory, output_directory):
 
     return eval_games_count, bullet_games_count
 
-def main():
-    input_directory = 'input_directory'
-    output_directory = 'output_directory'
-    # Create output directory if it doesn't exist
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
+def main(input_directory, output_directory, bullet_directory):
+    if not os.path.exists(bullet_directory):
+        os.makedirs(bullet_directory)
 
-    total_eval_games, total_bullet_games = decompress_and_parse(input_directory, output_directory)
+    total_eval_games, total_bullet_games = decompress_and_parse(input_directory, output_directory, bullet_directory)
     print(f"Total games with eval comments: {total_eval_games}")
     print(f"Total bullet games with eval comments: {total_bullet_games}")
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) < 4:
+        print("Usage: python lichess_evals_extractor.py <input_directory> <output_directory> <bullet_directory>")
+        sys.exit(1)
+
+    input_directory = sys.argv[1]
+    output_directory = sys.argv[2]
+    bullet_directory = sys.argv[3]
+    main(input_directory, output_directory, bullet_directory)
