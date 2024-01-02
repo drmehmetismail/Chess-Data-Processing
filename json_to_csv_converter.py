@@ -7,6 +7,7 @@ import json
 import os
 import pandas as pd
 from pandas import json_normalize
+import sys
 
 def extract_last_name(full_name):
     if not full_name:
@@ -20,37 +21,46 @@ def extract_last_name(full_name):
 
     return last_name
 
-data_list = []
+def main(json_file_path, csv_output_file):
+    data_list = []
 
-# Update the file path to the single JSON file containing all subfiles
-json_file_path = 'json_file_path'
+    try:
+        with open(json_file_path, 'r') as f:
+            all_data = json.load(f)
+            
+            if not all_data:  # Add a check for empty data
+                print(f"No data found in {json_file_path}")
+                return
+            # Iterate through each key in the JSON file
+            for key, data in all_data.items():
+                white_player = data.get('White', '')
+                black_player = data.get('Black', '')
 
-try:
-    with open(json_file_path, 'r') as f:
-        all_data = json.load(f)
+                data['White'] = extract_last_name(white_player)
+                data['Black'] = extract_last_name(black_player)
 
-        # Iterate through each key in the JSON file
-        for key, data in all_data.items():
-            white_player = data.get('White', '')
-            black_player = data.get('Black', '')
+                flattened_data = json_normalize(data)
+                data_list.append(flattened_data)
 
-            data['White'] = extract_last_name(white_player)
-            data['Black'] = extract_last_name(black_player)
+    except Exception as e:
+        print(f'Error processing {json_file_path}: {e}')
 
-            flattened_data = json_normalize(data)
-            data_list.append(flattened_data)
+    data_frame = pd.concat(data_list, ignore_index=True)
 
-except Exception as e:
-    print(f'Error processing {json_file_path}: {e}')
+    # Ensure the output directory exists
+    if not os.path.exists(csv_output_dir):
+        os.makedirs(csv_output_dir)
 
-data_frame = pd.concat(data_list, ignore_index=True)
+    # Define the output CSV file path within the output directory
+    csv_output_file = os.path.join(csv_output_dir, 'aggregated_game_data.csv')
+    data_frame.to_csv(csv_output_file, index=False)
+    print(f"Data saved to {csv_output_file}")
 
-# Update the output directory and file path as needed
-output_directory = 'output_directory'
-output_file = 'aggregated_data.csv'
-output_path = os.path.join(output_directory, output_file)
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print("Usage: python json_to_csv_converter.py <json_file_path> <csv_output_dir>")
+        sys.exit(1)
 
-if not os.path.exists(output_directory):
-    os.makedirs(output_directory)
-
-data_frame.to_csv(output_path, index=False)
+    json_file_path = sys.argv[1]
+    csv_output_dir = sys.argv[2]
+    main(json_file_path, csv_output_dir)
