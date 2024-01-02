@@ -9,6 +9,8 @@ It also outputs a density distribution plot for each merged column.
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import sys
+import os
 
 def calculate_statistics(csv_input_file, output_directory):
     # Reading the CSV file
@@ -52,7 +54,7 @@ def calculate_statistics(csv_input_file, output_directory):
     }
 
     output_df = pd.DataFrame(result_data)
-    output_csv_file = f"{output_directory}/chess_statistics_output.csv"
+    output_csv_file = f"{output_directory}/summarized_game_data.csv"
     output_df.to_csv(output_csv_file, index=False)
 
     # Graphing the density distribution of merged data and showing averages
@@ -68,7 +70,18 @@ def calculate_statistics(csv_input_file, output_directory):
         plt.show()
 
 
-# Example usage
-input_csv = 'input_csv_path'
-output_directory = 'output_directory'
-calculate_statistics(input_csv, output_directory)
+def main(input_csv_path, output_directory):
+    # Ensure the output directory exists
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+    calculate_statistics(input_csv_path, output_directory)
+
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print("Usage: python chess_stats_summarizer.py <input_csv_path> <output_directory>")
+        sys.exit(1)
+
+    input_csv_path = sys.argv[1]
+    output_directory = sys.argv[2]
+    main(input_csv_path, output_directory)
