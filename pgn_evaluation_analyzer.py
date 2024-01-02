@@ -6,11 +6,10 @@ containing the following columns:
 import json
 import os
 import chess.pgn
-import random
 import time
-import math
 from chess.engine import Cp, Mate, MateGiven, Wdl
 import chess.engine
+import sys
 
 # Function to calculate the expected value of a position based on the scoring system
 def calculate_expected_value(win_prob, draw_prob, loss_prob, turn, scoring_system):
@@ -223,14 +222,19 @@ def calculate_gi(game, scoring_system):
     }
 
 # Main function to process PGN files and output a single JSON file
-def main():
-    folder = 'input_path'
-    output_json = os.path.join(folder, 'aggregated_game_data.json')
+def main(input_folder, output_json_dir):
     aggregated_data = {}
     scoring_system = 'Standard'  # Or 'NorwayChess' 3-1-0 scoring
 
+    # Ensure the output directory exists
+    if not os.path.exists(output_json_dir):
+        os.makedirs(output_json_dir)
+
+    # Define the output JSON file path
+    output_json = os.path.join(output_json_dir, 'aggregated_game_data.json')
+
     key_counter = 1
-    for dirpath, dirnames, filenames in os.walk(folder):
+    for dirpath, dirnames, filenames in os.walk(input_folder):
         for filename in filenames:
             if filename.endswith('.pgn'):
                 pgn_file_path = os.path.join(dirpath, filename)
@@ -251,6 +255,12 @@ def main():
 
 if __name__ == "__main__":
     start_time = time.time()
-    main()
+    if len(sys.argv) < 3:
+        print("Usage: python pgn_evaluation_analyzer.py <input_folder> <output_json_dir>")
+        sys.exit(1)
+
+    input_folder = sys.argv[1]
+    output_json_dir = sys.argv[2]
+    main(input_folder, output_json_dir)
     end_time = time.time()
     print("Script finished in {:.2f} minutes".format((end_time - start_time) / 60.0))
