@@ -24,24 +24,23 @@ def decompress_and_parse(input_directory, output_directory, bullet_directory):
                     dctx = zstd.ZstdDecompressor()
                     with dctx.stream_reader(compressed_file) as reader:
                         text_stream = io.TextIOWrapper(reader, encoding='utf-8')
+                        game_count = 1
                         while True:
                             game = chess.pgn.read_game(text_stream)
                             if game is None:
                                 break
-                            
-                            node = game
-                            while node.variations:
-                                node = node.variation(0)
-                                if '[%eval' in node.comment:
-                                    is_bullet = "Bullet" in game.headers.get("Event", "")
-                                    output_file = bullets_file if is_bullet else evals_file
-                                    output_file.write(str(game) + '\n\n')
-                                    if is_bullet:
-                                        bullet_games_count += 1
-                                    else:
-                                        eval_games_count += 1
-                                    break
-
+                            game_count += 1
+                            # Check if the first move has an eval comment
+                            node = game.variation(0)
+                            if '[%eval' in node.comment:
+                                is_bullet = "Bullet" in game.headers.get("Event", "")
+                                output_file = bullets_file if is_bullet else evals_file
+                                output_file.write(str(game) + '\n\n')
+                                if is_bullet:
+                                    bullet_games_count += 1
+                                else:
+                                    eval_games_count += 1
+        print(f"Game count {game_count}")
     return eval_games_count, bullet_games_count
 
 def main(input_directory, output_directory, bullet_directory):
