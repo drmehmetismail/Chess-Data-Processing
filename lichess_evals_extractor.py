@@ -16,17 +16,24 @@ def extract_games(file_path, chunk_size=1024 * 1024 * 10):  # Default to 10 MB c
                 chunk = reader.read(chunk_size)
                 if not chunk:
                     break
-                data = previous_data + chunk.decode('utf-8')
-                games = re.split(r'\n\n(?=\[Event)', data)
 
-                if len(games) > 1:
-                    yield from games[:-1]
-                    previous_data = games[-1]
-                else:
-                    previous_data = data
+                try:
+                    data = previous_data + chunk.decode('utf-8')
+                    games = re.split(r'\n\n(?=\[Event)', data)
+                    if len(games) > 1:
+                        yield from games[:-1]
+                        previous_data = games[-1]
+                    else:
+                        previous_data = data
+
+                except UnicodeDecodeError:
+                    # Skip this chunk and move on to the next one
+                    previous_data = ''
+                    continue
 
             if previous_data:
                 yield previous_data
+
 
 def filter_and_save_games(input_directory, output_directory, max_file_size):
     file_index = 1
