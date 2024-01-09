@@ -1,62 +1,72 @@
-"""This script decompresses and parses all .pgn.zst files in a directory, 
+"""This script efficiently decompresses and parses all .pgn.zst files in a directory, 
 and writes all games with eval comments to a .pgn file.
-It also writes all bullet games with eval comments to a separate .pgn file."""
+"""
 
-import os
-import chess.pgn
-import zstandard as zstd
-import io
+import re
 import sys
+import os
+import zstandard as zstd
 
-def decompress_and_parse(input_directory, output_directory, bullet_directory):
-    eval_games_count = 0
-    bullet_games_count = 0
+def extract_games(file_path, chunk_size=1024 * 1024 * 10):  # Default to 10 MB chunks
+    dctx = zstd.ZstdDecompressor()
+    with open(file_path, 'rb') as fh:
+        with dctx.stream_reader(fh) as reader:
+            previous_data = ''
+            while True:
+                chunk = reader.read(chunk_size)
+                if not chunk:
+                    break
+                data = previous_data + chunk.decode('utf-8')
+                games = re.split(r'\n\n(?=\[Event)', data)
 
-    evals_file_path = os.path.join(output_directory, 'evals.pgn')
-    print(f"Writing games with eval comments to {evals_file_path}...")
-    bullets_file_path = os.path.join(bullet_directory, 'bullets.pgn')
+                if len(games) > 1:
+                    yield from games[:-1]
+                    previous_data = games[-1]
+                else:
+                    previous_data = data
 
-    with open(evals_file_path, 'w', encoding='utf-8') as evals_file, open(bullets_file_path, 'w', encoding='utf-8') as bullets_file:
-        for file in os.listdir(input_directory):
-            if file.endswith('.pgn.zst'):
-                file_path = os.path.join(input_directory, file)
-                with open(file_path, 'rb') as compressed_file:
-                    dctx = zstd.ZstdDecompressor()
-                    with dctx.stream_reader(compressed_file) as reader:
-                        text_stream = io.TextIOWrapper(reader, encoding='utf-8')
-                        game_count = 1
-                        while True:
-                            game = chess.pgn.read_game(text_stream)
-                            if game is None:
-                                break
-                            game_count += 1
-                            # Check if the first move has an eval comment
-                            node = game.variation(0)
-                            if '[%eval' in node.comment:
-                                is_bullet = "Bullet" in game.headers.get("Event", "")
-                                output_file = bullets_file if is_bullet else evals_file
-                                output_file.write(str(game) + '\n\n')
-                                if is_bullet:
-                                    bullet_games_count += 1
-                                else:
-                                    eval_games_count += 1
-        print(f"Game count {game_count}")
-    return eval_games_count, bullet_games_count
+            if previous_data:
+                yield previous_data
 
-def main(input_directory, output_directory, bullet_directory):
-    if not os.path.exists(bullet_directory):
-        os.makedirs(bullet_directory)
+def filter_and_save_games(input_directory, output_directory, max_file_size):
+    file_index = 1
+    current_file_size = 0
+    output_file = None
 
-    total_eval_games, total_bullet_games = decompress_and_parse(input_directory, output_directory, bullet_directory)
-    print(f"Total games with eval comments: {total_eval_games}")
-    print(f"Total bullet games with eval comments: {total_bullet_games}")
+    zst_files = [f for f in os.listdir(input_directory) if f.endswith('.zst')]
+    for zst_file in zst_files:
+        full_path = os.path.join(input_directory, zst_file)
+        print(full_path)
+        for game in extract_games(full_path):
+            if "[%eval" in game and "Bullet" not in game:
+                if not output_file or current_file_size >= max_file_size:
+                    if output_file:
+                        output_file.close()
+                    output_filename = os.path.join(output_directory, f'games_with_eval_no_bullet{file_index}.pgn')
+                    output_file = open(output_filename, 'w')
+                    file_index += 1
+                    print("file_index: ", file_index)
+                    current_file_size = 0
 
-if __name__ == '__main__':
+                output_file.write(game + '\n\n')
+                current_file_size += len(game.encode('utf-8'))
+
+        if output_file:
+            output_file.close()
+            output_file = None
+
+def main(input_directory, output_directory, max_file_size):
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+    filter_and_save_games(input_directory, output_directory, max_file_size
+                          
+if __name__ == "__main__":
     if len(sys.argv) < 4:
-        print("Usage: python lichess_evals_extractor.py <input_directory> <output_directory> <bullet_directory>")
+        print("Usage: python lichess_evals_extractor.py <input_directory> <output_directory> <max_file_size>")
         sys.exit(1)
+    input_directory = r"C:\Users\k1767099\_LichessDB\Output2"
+    output_directory = r"C:\Users\k1767099\_LichessDB\Output2"
+    max_file_size = 1024 * 1024 * 100  # Default 100 MB, can be modified
 
-    input_directory = sys.argv[1]
-    output_directory = sys.argv[2]
-    bullet_directory = sys.argv[3]
-    main(input_directory, output_directory, bullet_directory)
+    main(input_directory, output_directory, max_file_size)
