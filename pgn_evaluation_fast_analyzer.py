@@ -132,7 +132,8 @@ def main(input_pgn_dir, output_json_dir):
                 pgn_file_path = os.path.join(dirpath, filename)
                 json_file_name = filename.replace('.pgn', '.json')
                 output_json_path = os.path.join(output_json_dir, json_file_name)
-                with open(pgn_file_path) as pgn:
+                file_encoding = detect_encoding(pgn_file_path)
+                with open(pgn_file_path, encoding=file_encoding, errors='replace') as pgn:
                     while True:
                         game = chess.pgn.read_game(pgn)
                         if game is None:
@@ -191,8 +192,12 @@ def main(input_pgn_dir, output_json_dir):
 
 if __name__ == "__main__":
     start_time = time.time()
-    input_pgn_dir = r"C:\Users\k1767099\_LichessDB\Test\new"
-    output_json_dir = r"C:\Users\k1767099\_LichessDB\Test\new"
+    if len(sys.argv) < 3:
+        print("Usage: python pgn_engine_vs_engine_eval_analyzer.py <input_pgn_dir> <output_json_dir>")
+        sys.exit(1)
+
+    input_pgn_dir = sys.argv[1]
+    output_json_dir = sys.argv[2]
     main(input_pgn_dir, output_json_dir)
     end_time = time.time()
     print("Script finished in {:.2f} minutes".format((end_time - start_time) / 60.0))
