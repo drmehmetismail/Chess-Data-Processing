@@ -10,6 +10,7 @@ import os
 from chess.engine import Cp, Wdl
 import time
 import sys
+import chardet
 
 # Function to extract the evaluation from a node
 def extract_eval_from_node(node):
