@@ -5,7 +5,20 @@ This is the full version of the above script."""
 import pandas as pd
 import sys
 import os
+import glob
 
+def combine_csv_files(input_dir, output_filename='combined.csv'):
+    csv_files = glob.glob(os.path.join(input_dir, '*.csv'))
+    combined_df = pd.DataFrame()
+
+    for file in csv_files:
+        df = pd.read_csv(file)
+        combined_df = pd.concat([combined_df, df], ignore_index=True)
+
+    output_path = os.path.join(input_dir, output_filename)
+    combined_df.to_csv(output_path, index=False)
+    print(f"Combined CSV created at {output_path}")
+    return output_path
 
 # Functions
 def read_csv(file_path):
@@ -119,6 +132,9 @@ def main(csv_all_games_path, player_stats_output_dir):
     save_to_csv(player_stats, output_file_path)
 
 if __name__ == "__main__":
+    # If multiple CSVs: 
+    # input_dir = r"C:\Users\k1767099\_LichessDB\CCRL\test"
+    # csv_all_games_path = combine_csv_files(input_dir, output_filename='combined.csv')
     if len(sys.argv) < 3:
         print("Usage: python csv_to_player_stats.py <csv_all_games_path> <player_stats_output_dir>")
         sys.exit(1)
