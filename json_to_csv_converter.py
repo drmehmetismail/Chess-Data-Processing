@@ -7,7 +7,6 @@ import json
 import os
 import pandas as pd
 from pandas import json_normalize
-import sys
 
 def extract_last_name(full_name):
     if not full_name:
@@ -21,9 +20,7 @@ def extract_last_name(full_name):
 
     return last_name
 
-def main(json_file_path, csv_output_file):
-    data_list = []
-
+def process_json_file(json_file_path, data_list):
     try:
         with open(json_file_path, 'r') as f:
             all_data = json.load(f)
@@ -45,6 +42,20 @@ def main(json_file_path, csv_output_file):
     except Exception as e:
         print(f'Error processing {json_file_path}: {e}')
 
+def main(directory_path, csv_output_dir):
+    data_list = []
+
+    # Walk through the directory and its subdirectories
+    for root, dirs, files in os.walk(directory_path):
+        for file in files:
+            if file.endswith('.json'):
+                json_file_path = os.path.join(root, file)
+                process_json_file(json_file_path, data_list)
+
+    if not data_list:  # Check if data_list is empty
+        print("No JSON files found or all files are empty.")
+        return
+
     data_frame = pd.concat(data_list, ignore_index=True)
 
     # Ensure the output directory exists
@@ -61,6 +72,6 @@ if __name__ == "__main__":
         print("Usage: python json_to_csv_converter.py <json_file_path> <csv_output_dir>")
         sys.exit(1)
 
-    json_file_path = sys.argv[1]
+    json_dir = sys.argv[1]
     csv_output_dir = sys.argv[2]
-    main(json_file_path, csv_output_dir)
+    main(json_dir, csv_output_dir)
