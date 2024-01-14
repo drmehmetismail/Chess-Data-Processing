@@ -1,61 +1,66 @@
+# Inputs a CSV generated from csv_to_player_stats.py and outputs a CSV that includes normalized gi stats
+# and prints the linear function to obtain normalized gi for a given raw gi
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 import os
-from scipy.optimize import curve_fit
 
-def logistic_function(x, L, k, x0):
-    try:
-        return L / (1 + np.exp(-k * (x - x0)))
-    except OverflowError:
-        return float('inf')
-
-def normalize_column(data, column_name, mean=100, std_dev=15):
+def normalize_column(data, column_name, new_mean=100, new_std=15):
     col = data[column_name]
-    normalized_col = (col - col.mean()) / col.std() * std_dev + mean
-    return normalized_col
+    original_mean = col.mean()
+    original_std = col.std()
+    normalized_col = new_std * ((col - original_mean) / original_std) + new_mean
+    return normalized_col, original_mean, original_std
 
-def fit_logistic_function(x, y):
-    # Adjusted initial parameter guesses: [1.1 * max(y), 1, median(x)]
-    initial_guesses = [max(y) * 1.3, 1, np.median(x)]    
-    try:
-        params, _ = curve_fit(logistic_function, x, y, p0=initial_guesses)
-        return params
-    except RuntimeError:
-        print("Error - curve fitting failed")
-        return [0, 0, 0]
+def visualize_distribution(data, column_name, title):
+    plt.figure(figsize=(12, 6))
+
+    plt.subplot(1, 2, 1)
+    sns.histplot(data[column_name], kde=True)
+    plt.title(f'Histogram of {column_name}')
+
+# linear function for normalized GI
+# normalized_avg_gi = a * avg_gi + b
+def calculate_normalized_avg_gi(mu, sd):
+    # Calculate b and a using the given formulas
+    b = -15 * mu / sd + 100
+    a = (100 - b) / mu
+    # normalized_avg_gi = a * avg_gi + b
+    # return slope = a and intercept = b
+    return a, b
+
 
 def main(file_path, min_games_played, min_gpl, output_dir):
     data = pd.read_csv(file_path)
 
     # Filter rows based on min_games_played and min_gpl
     data = data[(data['total_game_count'] >= min_games_played) & (data['avg_gpl'] >= min_gpl)]
-    
+
     # Normalize avg_gi
-    data['normalized_avg_gi'] = normalize_column(data, 'avg_gi')
+    normalized_avg_gi, original_mean, original_std = normalize_column(data, 'avg_gi')
+    data.insert(data.columns.get_loc('avg_gi') + 1, 'normalized_avg_gi', normalized_avg_gi)
 
-    # Fit logistic function
-    params = fit_logistic_function(data['avg_gi'], data['normalized_avg_gi'])
+    # Visualize the distribution of avg_gi and normalized_avg_gi
+    # visualize_distribution(data, 'avg_gi', 'Original avg_gi Distribution')
+    # visualize_distribution(data, 'normalized_avg_gi', 'Normalized avg_gi Distribution')
 
-    if all(param == 0 for param in params):
-        print("Failed to fit logistic function.")
-        return
-
-    # Output the logistic function parameters
-    print(f"Fitted Logistic Function: L / (1 + exp(-k * (x - x0)))")
-    print(f"Where L = {params[0]}, k = {params[1]}, x0 = {params[2]}")
-
-    # Predict using logistic function
-    data['predicted_normalized_avg_gi'] = data['avg_gi'].apply(lambda x: logistic_function(x, *params))
+    # Output linear regression model parameters
+    slope, intercept = calculate_normalized_avg_gi(original_mean, original_std)
+    print("original_mean: ", original_mean)
+    print("original_std: ", original_std)
+    # Print the formula
+    print(f"normalized_avg_gi = {slope:.4f} * avg_gi + {intercept:.4f}")
 
     # Save the updated DataFrame to the specified output directory
-    output_file_path = os.path.join(output_dir, 'normalized_dataset_min-100.csv')
+    output_file_path = os.path.join(output_dir, 'normalized_dataset-10-0gpl2.csv')
     data.to_csv(output_file_path, index=False)
-    print("Normalization and fitting completed. Results saved to 'normalized_dataset.csv'.")
-
+    print(f"Normalization completed. Results saved to '{output_file_path}'.")
+    
 if __name__ == "__main__":
-    # Load CSV
-    file_path = r'C:\Users\k1767099\Downloads\Lichess_stats\player_stats.csv'
-    min_games_played = 100
-    min_gpl = 0.1
-    output_dir = r'C:\Users\k1767099\Downloads\Lichess_stats'
+    # File paths and parameters
+    file_path = ''
+    min_games_played = 10
+    min_gpl = 0
+    output_dir = ''
     main(file_path, min_games_played, min_gpl, output_dir)
