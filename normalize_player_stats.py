@@ -1,5 +1,6 @@
 # Inputs a CSV generated from csv_to_player_stats.py and outputs a CSV that includes normalized gi stats
 # and prints the linear function to obtain normalized gi for a given raw gi
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -63,7 +64,7 @@ def main(file_path, min_games_played, min_gpl, output_dir):
     
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python chess_stats_summarizer.py <input_csv_path> <output_directory>")
+        print("Usage: python normalize_player_stats.py <input_csv_path> <output_directory>")
         sys.exit(1)
     # File paths and parameters
     # set min_games_played and min_gpl values
