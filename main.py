@@ -12,7 +12,8 @@ def run_script(script_path, args):
 
 def main():
     base_path = os.path.dirname(os.path.abspath(__file__))
-    # input directory for Lichess DB files (.zst files)
+    # input directory for Lichess DB files (.zst files). E.g. 
+    # E.g. download https://database.lichess.org/standard/lichess_db_standard_rated_2013-01.pgn.zst
     lichess_db_input_dir = ''
     # output directory for PGN files
     pgn_output_dir = ''
