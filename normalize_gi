@@ -9,7 +9,7 @@ import os
 
 def normalize_gi(data, column_name):
     col = data[column_name]
-    # normalized_avg_gi = 142.3271 + 27.8988 * avg_gi
+    # Original linear function: normalized_avg_gi = 142.3271 + 27.8988 * avg_gi
     normalized_col = 142.33 + 27.90 * col
     return normalized_col
 
