@@ -52,14 +52,18 @@ def main(file_path, min_games_played, min_gpl, output_dir):
     # Print the formula
     print(f"normalized_avg_gi = {slope:.4f} * avg_gi + {intercept:.4f}")
 
+    # Calculate and print for specific values of avg_gi
+    # print("normalized_avg_gi = ", slope * 0.75 + intercept)
+
     # Save the updated DataFrame to the specified output directory
-    output_file_path = os.path.join(output_dir, 'normalized_dataset-10-0gpl2.csv')
+    output_file_path = os.path.join(output_dir, 'normalized_dataset_player_stats.csv')
     data.to_csv(output_file_path, index=False)
     print(f"Normalization completed. Results saved to '{output_file_path}'.")
     
 if __name__ == "__main__":
     # File paths and parameters
     file_path = ''
+    # set min_games_played and min_gpl values
     min_games_played = 10
     min_gpl = 0
     output_dir = ''
