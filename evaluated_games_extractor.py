@@ -1,5 +1,5 @@
 """This script efficiently decompresses and parses all .pgn.zst files in a directory, 
-and writes all games with eval comments to a .pgn file.
+and writes all games (excluding Bullet games) with eval comments to a .pgn file.
 """
 
 import re
