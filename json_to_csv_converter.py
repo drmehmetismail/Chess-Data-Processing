@@ -8,6 +8,7 @@ import os
 import pandas as pd
 from pandas import json_normalize
 import time
+import sys
 
 def extract_last_name(full_name):
     if not full_name:
