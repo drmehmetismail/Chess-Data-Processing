@@ -125,15 +125,16 @@ def main(csv_all_games_path, player_stats_output_dir):
         os.makedirs(player_stats_output_dir)
 
     # Define the output CSV file path within the output directory
-    output_file_path = os.path.join(player_stats_output_dir, 'player_stats.csv')
+    output_file_path = os.path.join(player_stats_output_dir, 'player_stats2.csv')
 
     # Sorting and Saving
     player_stats = player_stats.sort_values(by='avg_gi', ascending=False)
     save_to_csv(player_stats, output_file_path)
 
+
 if __name__ == "__main__":
-    # If multiple CSVs: 
-    # input_dir = r"C:\Users\k1767099\_LichessDB\CCRL\test"
+    # If multiple CSVs in a directory, then uncomment the following two lines.
+    # input_dir = ''
     # csv_all_games_path = combine_csv_files(input_dir, output_filename='combined.csv')
     if len(sys.argv) < 3:
         print("Usage: python csv_to_player_stats.py <csv_all_games_path> <player_stats_output_dir>")
