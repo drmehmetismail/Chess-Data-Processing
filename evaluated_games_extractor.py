@@ -70,10 +70,10 @@ def main(input_directory, output_directory, max_file_size):
                           
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python lichess_evals_extractor.py <input_directory> <output_directory> <max_file_size>")
+        print("Usage: python evaluated_games_extractor.py <input_directory> <output_directory> <max_file_size>")
         sys.exit(1)
-    input_directory = r"C:\Users\k1767099\_LichessDB\Output2"
-    output_directory = r"C:\Users\k1767099\_LichessDB\Output2"
+    input_directory = sys.argv[1]
+    output_directory = sys.argv[2]
     max_file_size = 1024 * 1024 * 100  # Default 100 MB, can be modified
 
     main(input_directory, output_directory, max_file_size)
