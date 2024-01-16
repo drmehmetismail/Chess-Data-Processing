@@ -69,7 +69,7 @@ def main(input_directory, output_directory, max_file_size):
     filter_and_save_games(input_directory, output_directory, max_file_size
                           
 if __name__ == "__main__":
-    if len(sys.argv) < 4:
+    if len(sys.argv) < 3:
         print("Usage: python lichess_evals_extractor.py <input_directory> <output_directory> <max_file_size>")
         sys.exit(1)
     input_directory = r"C:\Users\k1767099\_LichessDB\Output2"
