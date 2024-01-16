@@ -38,7 +38,7 @@ def main(file_path, output_dir):
     # visualize_distribution(data, 'normalized_gi', 'Normalized GI Distribution')
 
     # Save the updated DataFrame to the specified output directory
-    output_file_path = os.path.join(output_dir, 'normalized_dataset-WCC_basic2.csv')
+    output_file_path = os.path.join(output_dir, 'normalized_dataset.csv')
     data.to_csv(output_file_path, index=False)
     print(f"Normalization completed. Results saved to '{output_file_path}'.")
     
