@@ -70,7 +70,7 @@ def calculate_statistics(csv_input_file, output_directory):
     output_df = pd.DataFrame(result_data)
     output_csv_file = f"{output_directory}/summarized_game_data.csv"
     output_df.to_csv(output_csv_file, index=False)
-
+    """
     # Graphing the density distribution of merged data and showing averages
     for col in merge_cols:
         plt.figure()
@@ -81,7 +81,7 @@ def calculate_statistics(csv_input_file, output_directory):
         plt.ylabel('Density')
         plot_file = f"{output_directory}/{col}_density_distribution.png"
         plt.savefig(plot_file)
-        plt.show()
+        plt.show()"""
 
 
 def main(input_csv_path, output_directory):
