@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import sys
 
 def normalize_column(data, column_name, new_mean=100, new_std=15):
     col = data[column_name]
@@ -61,10 +62,13 @@ def main(file_path, min_games_played, min_gpl, output_dir):
     print(f"Normalization completed. Results saved to '{output_file_path}'.")
     
 if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print("Usage: python chess_stats_summarizer.py <input_csv_path> <output_directory>")
+        sys.exit(1)
     # File paths and parameters
-    file_path = ''
     # set min_games_played and min_gpl values
     min_games_played = 10
     min_gpl = 0
-    output_dir = ''
-    main(file_path, min_games_played, min_gpl, output_dir)
+    input_csv_path = sys.argv[1]
+    output_directory = sys.argv[2]
+    main(input_csv_path, min_games_played, min_gpl, output_directory)
