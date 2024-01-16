@@ -66,7 +66,7 @@ def main(input_directory, output_directory, max_file_size):
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
 
-    filter_and_save_games(input_directory, output_directory, max_file_size
+    filter_and_save_games(input_directory, output_directory, max_file_size)
                           
 if __name__ == "__main__":
     if len(sys.argv) < 3:
