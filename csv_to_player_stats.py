@@ -125,7 +125,7 @@ def main(csv_all_games_path, player_stats_output_dir):
         os.makedirs(player_stats_output_dir)
 
     # Define the output CSV file path within the output directory
-    output_file_path = os.path.join(player_stats_output_dir, 'player_stats2.csv')
+    output_file_path = os.path.join(player_stats_output_dir, 'player_stats.csv')
 
     # Sorting and Saving
     player_stats = player_stats.sort_values(by='avg_gi', ascending=False)
