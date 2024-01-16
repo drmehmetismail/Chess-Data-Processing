@@ -1,7 +1,7 @@
 # Chess Data Processing and Calculating Stats
 
 ## Overview
-This Python codebase processes chess game data, transforming it from compressed Lichess database files to insightful stats including Game Intelligence, Game Point Loss, and Average Centipawn Loss (ACPL). The pipeline goes through several stages of data extraction, analysis, and conversion.
+This Python codebase processes chess game data, transforming it from compressed Lichess database files to insightful stats including Game Intelligence (GI), Game Point Loss (GPL), and Average Centipawn Loss (ACPL). The pipeline goes through several stages of data extraction, analysis, and conversion.
 
 ## Scripts
 1. `evaluated_games_extractor.py`: Extracts games with evaluations from .zst files (e.g. from Lichess Open database) and outputs PGN files.
