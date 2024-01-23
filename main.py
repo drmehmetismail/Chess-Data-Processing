@@ -33,6 +33,7 @@ def main():
     scripts = [
         ('evaluated_games_extractor.py', [lichess_db_input_dir, pgn_output_dir]), 
         ('pgn_evaluation_analyzer.py', [pgn_output_dir, json_output_dir]),
+        ('json_adjust_gi.py', [json_output_dir]),
         ('json_to_csv_converter.py', [json_output_dir, csv_output_dir]),
         ('csv_to_player_stats.py', [csv_combined_file_path, stats_output_dir]),
         ('chess_stats_summarizer.py', [csv_combined_file_path, stats_output_dir]),
