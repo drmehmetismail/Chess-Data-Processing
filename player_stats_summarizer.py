@@ -4,6 +4,7 @@ the total number of games, and total moves from the input CSV file, and saves th
 """
 
 import pandas as pd
+import os
 
 def calculate_statistics(input_csv_path):
     # Read the CSV file, exclude non-numeric columns
@@ -30,7 +31,8 @@ def main():
     output_csv_file_name = 'summarized_player_data.csv'
 
     output_df = calculate_statistics(input_csv_path)
-    output_df.to_csv(output_dir + output_csv_file_name, index=True)
+    output_csv_path = os.path.join(output_dir, output_csv_file_name)
+    output_df.to_csv(output_csv_path, index=True)
     
 if __name__ == "__main__":
     main()
