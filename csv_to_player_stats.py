@@ -1,6 +1,7 @@
 """This script analyzes chess game data, calculates various statistics (including sums, medians, and averages), 
 and generates a final DataFrame with player statistics, sorted by the average gi score in descending order.
-This is the full version of the above script."""
+-- Adds a new column adjusted_gi to process adjusted_white_gi and adjusted_black_gi columns, which are weighted by the Elo ratings
+of the opponents."""
 
 import pandas as pd
 import sys
@@ -68,6 +69,9 @@ def calculate_averages(player_stats):
     player_stats['avg_gi'] = player_stats['total_gi_sum'] / player_stats['total_game_count']
     player_stats['avg_gpl'] = player_stats['total_gpl_sum'] / player_stats['total_game_count']
     player_stats['avg_acpl'] = player_stats['total_acpl_sum'] / player_stats['total_game_count']
+    # Calculate adjusted_avg_gi
+    player_stats['adjusted_avg_gi'] = (player_stats['adjusted_white_gi_sum'] + player_stats['adjusted_black_gi_sum']) / player_stats['total_game_count']
+    
     return player_stats
 
 def save_to_csv(df, file_path):
@@ -89,6 +93,9 @@ def main(csv_all_games_path, player_stats_output_dir):
     white_acpl_sum = calculate_sum(df, 'White', 'white_acpl', 'white_acpl')
     black_acpl_sum = calculate_sum(df, 'Black', 'black_acpl', 'black_acpl')
 
+    adjusted_white_gi_sum = calculate_sum(df, 'White', 'adjusted_white_gi', 'adjusted_white_gi')
+    adjusted_black_gi_sum = calculate_sum(df, 'Black', 'adjusted_black_gi', 'adjusted_black_gi')
+    
     # Calculating Game Counts
     white_games = calculate_games(df, 'White')
     black_games = calculate_games(df, 'Black')
@@ -104,20 +111,31 @@ def main(csv_all_games_path, player_stats_output_dir):
     gpl_stats = calculate_statistics(combined_df, 'gpl')
     acpl_stats = calculate_statistics(combined_df, 'acpl')
 
+    adjusted_combined_df = pd.concat([
+        df[['White', 'adjusted_white_gi']].rename(columns={'White': 'Player', 'adjusted_white_gi': 'adjusted_gi'}),
+        df[['Black', 'adjusted_black_gi']].rename(columns={'Black': 'Player', 'adjusted_black_gi': 'adjusted_gi'})
+    ])
+    adjusted_gi_stats = calculate_statistics(adjusted_combined_df, 'adjusted_gi')
+    
     # Merging DataFrames
-    sums = [white_gi_sum, black_gi_sum, white_gpl_sum, black_gpl_sum, white_acpl_sum, black_acpl_sum]
+    sums = [white_gi_sum, black_gi_sum, white_gpl_sum, black_gpl_sum, white_acpl_sum, black_acpl_sum, adjusted_white_gi_sum, adjusted_black_gi_sum]
     total_sums = merge_dataframes(sums + [total_games, total_moves])
     total_sums['total_gi_sum'] = total_sums['white_gi_sum'] + total_sums['black_gi_sum']
     total_sums['total_gpl_sum'] = total_sums['white_gpl_sum'] + total_sums['black_gpl_sum']
     total_sums['total_acpl_sum'] = total_sums['white_acpl_sum'] + total_sums['black_acpl_sum']
-
-    player_stats = merge_dataframes([total_sums, gi_stats, gpl_stats, acpl_stats])
-
+    total_sums['adjusted_white_gi_sum'] = total_sums['adjusted_white_gi_sum']
+    total_sums['adjusted_black_gi_sum'] = total_sums['adjusted_black_gi_sum']
+    
+    player_stats = merge_dataframes([total_sums, gi_stats, gpl_stats, acpl_stats, adjusted_gi_stats])
+    
     # Calculating Averages
     player_stats = calculate_averages(player_stats)
 
     # Reordering columns
-    columns_order = ['Player', 'avg_gi', 'avg_gpl', 'avg_acpl', 'total_game_count', 'total_moves', 'gi_median', 'gpl_median', 'acpl_median', 'gi_std', 'gpl_std', 'acpl_std'] + [col for col in player_stats.columns if col not in ['Player', 'avg_gi', 'avg_gpl', 'avg_acpl', 'total_game_count', 'total_moves', 'gi_median', 'gpl_median', 'acpl_median', 'gi_std', 'gpl_std', 'acpl_std']]
+    columns_order = ['Player', 'adjusted_avg_gi', 'avg_gi', 'avg_gpl', 'avg_acpl', 'total_game_count', 'total_moves', 
+                     'gi_median', 'gpl_median', 'acpl_median', 'gi_std', 'gpl_std', 'acpl_std'] + [col for col in player_stats.columns if col not in ['Player', 'adjusted_avg_gi', 'avg_gi', 'avg_gpl', 'avg_acpl', 
+                                                        'total_game_count', 'total_moves', 'gi_median', 
+                                                        'gpl_median', 'acpl_median', 'gi_std', 'gpl_std', 'acpl_std']]
     player_stats = player_stats[columns_order]
 
     # Ensure the output directory exists
@@ -128,9 +146,8 @@ def main(csv_all_games_path, player_stats_output_dir):
     output_file_path = os.path.join(player_stats_output_dir, 'player_stats.csv')
 
     # Sorting and Saving
-    player_stats = player_stats.sort_values(by='avg_gi', ascending=False)
+    player_stats = player_stats.sort_values(by='adjusted_avg_gi', ascending=False)
     save_to_csv(player_stats, output_file_path)
-
 
 if __name__ == "__main__":
     # If multiple CSVs in a directory, then uncomment the following two lines.
