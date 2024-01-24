@@ -1,6 +1,6 @@
-"""This script inputs the PGN files and outputs a JSON file including calculations
-of various stats such as GI, GPL, ACPL, etc. for each game. 
-The stats are simpler and the script works faster than the pgn_evaluation_analyzer.py"""
+"""
+This script inputs the PGN files with games annotated with Stockfish and outputs a JSON file including calculations of stats such as GI, GPL, ACPL, etc. for each game. 
+"""
 
 import chess
 import chess.pgn
@@ -10,7 +10,7 @@ import os
 from chess.engine import Cp, Wdl
 import time
 import sys
-import chardet
+
 
 # Function to extract the evaluation from a node
 def extract_eval_from_node(node):
@@ -65,23 +65,19 @@ def calculate_gi_by_result(white_gpl, black_gpl, game_result, postmove_exp_white
     return white_gi, black_gi
 
 # Function to calculate GI and GPL in the usual way
-def gi_and_gpl(pawns_list, game_result):
+def gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo):
     white_gpl, black_gpl = 0, 0
     white_gi, black_gi = 0, 0
     white_move_number, black_move_number = 0, 0
 
     for i, cp in enumerate(pawns_list):
         # Determine whose turn it is
-        #print("i: ", i)
         turn = "White" if i % 2 == 0 else "Black"
         
         # Convert centipawn value to probability
         # handle the initial case
         premove_eval = Cp(int(100 * pawns_list[i-1] if i > 0 else 100 * pawns_list[1]))
-        #print("premove_eval: ", premove_eval)
         postmove_eval = Cp(int(100 * cp))
-        #print("cp: ", cp)
-        #print("postmove_eval: ", postmove_eval)
 
         # Calculate expected values before the move
         win_draw_loss = premove_eval.wdl()
@@ -97,9 +93,6 @@ def gi_and_gpl(pawns_list, game_result):
         if turn == "Black":
             exp_white_point_loss = postmove_exp_white - premove_exp_white
             white_gpl += exp_white_point_loss
-            #print("white_move_number: ", white_move_number)
-            #print("premove_eval: ", premove_eval)
-            #print("postmove_eval: ", postmove_eval)
             white_move_number += 1
         else:
             exp_black_point_loss = premove_exp_black - postmove_exp_black
@@ -107,8 +100,16 @@ def gi_and_gpl(pawns_list, game_result):
             black_move_number += 1
     # Calculate GI based on game result
     white_gi, black_gi = calculate_gi_by_result(white_gpl, black_gpl, game_result, postmove_exp_white, postmove_exp_black)
-
-    return white_gi, black_gi, white_gpl, black_gpl, white_move_number, black_move_number-1
+    # Adjust the GI scores with respect to the opponent's rating (if applicable)
+    if WhiteElo is not None and BlackElo is not None:
+        white_gi = calculate_adjusted_gi(white_gi, BlackElo, 2800)
+        black_gi = calculate_adjusted_gi(black_gi, WhiteElo, 2800)
+    # Record raw GIs
+    white_gi_raw, black_gi_raw = white_gi, black_gi
+    # Normalize GI
+    white_gi = calculate_normalized_gi(white_gi)
+    black_gi = calculate_normalized_gi(black_gi)
+    return white_gi, black_gi, white_gpl, black_gpl, white_gi_raw, black_gi_raw, white_move_number, black_move_number-1
 
 # Function to calculate the expected value of a position
 def calculate_expected_value(win_prob, draw_prob, loss_prob, turn):
@@ -120,6 +121,20 @@ def calculate_expected_value(win_prob, draw_prob, loss_prob, turn):
         expected_value_black = win_prob * 1 + draw_prob * 0.5
     return expected_value_white, expected_value_black
 
+# Calculate normalized GI score
+def calculate_normalized_gi(gi):
+    # set a and b for normalized_gi = a + b *gi
+    a, b = 157.57, 18.55
+    return a  + b* gi
+    
+# Adjust the GI score with respect to the opponent's rating
+def calculate_adjusted_gi(gi, opponent_elo, reference_elo):
+    return gi - (1 - 2 * expected_score(opponent_elo, reference_elo)) * abs(gi)
+
+# Adjust the GI score with respect to the opponent's rating
+def expected_score(opponent_elo, reference_elo):
+    return 1 / (1 + 10 ** ((reference_elo - opponent_elo) / 400))
+    
 def main(input_pgn_dir, output_json_dir):
     # Ensure the output directory exists
     if not os.path.exists(output_json_dir):
@@ -133,8 +148,7 @@ def main(input_pgn_dir, output_json_dir):
                 pgn_file_path = os.path.join(dirpath, filename)
                 json_file_name = filename.replace('.pgn', '.json')
                 output_json_path = os.path.join(output_json_dir, json_file_name)
-                file_encoding = detect_encoding(pgn_file_path)
-                with open(pgn_file_path, encoding=file_encoding, errors='replace') as pgn:
+                with open(pgn_file_path) as pgn:
                     while True:
                         game = chess.pgn.read_game(pgn)
                         if game is None:
@@ -166,7 +180,9 @@ def main(input_pgn_dir, output_json_dir):
                             "BlackResult": blackResult,
                             "Date": game.headers.get("Date", None),
                                 }
-
+                        # Get the ELO ratings of the players as integers
+                        WhiteElo = int(game.headers.get("WhiteElo", None)) if game.headers.get("WhiteElo", None) else None
+                        BlackElo = int(game.headers.get("BlackElo", None)) if game.headers.get("BlackElo", None) else None
                         pawns_list = extract_pawn_evals_from_pgn(game)
                         white_acpl, black_acpl = calculate_acpl(pawns_list)
 
@@ -174,12 +190,13 @@ def main(input_pgn_dir, output_json_dir):
                         #white_moves = len(pawns_list) - 1 - black_moves
 
                         # Calculate GI and GPL for both players
-                        white_gi, black_gi, white_gpl, black_gpl, white_move_number, black_move_number = gi_and_gpl(pawns_list, game_result)
+                        white_gi, black_gi, white_gpl, black_gpl, white_gi_raw, black_gi_raw, white_move_number, black_move_number = gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo)
                         key = key_counter
                         game_data = {
                             "white_gi": round(white_gi, 4), "black_gi": round(black_gi, 4),
                             "white_gpl": round(white_gpl, 4), "black_gpl": round(black_gpl, 4),
                             "white_acpl": round(white_acpl, 4), "black_acpl": round(black_acpl, 4),
+                            "white_gi_raw": round(white_gi_raw, 4), "black_gi_raw": round(black_gi_raw, 4),
                             "white_move_number": white_move_number, "black_move_number": black_move_number,
                             **game_details,
                         }
